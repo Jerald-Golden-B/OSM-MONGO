@@ -36,9 +36,11 @@
         import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.161.0/three.module.js'
         import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
 
-
+        let totalLines = 0;
 
         var scene = new THREE.Scene();
+        const raycaster = new THREE.Raycaster();
+        const pointer = new THREE.Vector2();
         var camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 10000);
         camera.position.set(0, 0, 300);
         scene.add(camera);
@@ -48,8 +50,17 @@
         document.body.appendChild(renderer.domElement);
 
         var controls = new OrbitControls(camera, renderer.domElement);
-        controls.minDistance = 10;
+        controls.rotateSpeed = 0.5;
+        controls.enablePan = false;
         controls.update();
+        var Objects = [];
+
+        let globe = new THREE.Mesh(
+            new THREE.SphereGeometry(100, 64, 64, 0, Math.PI * 2, THREE.MathUtils.degToRad(0), THREE.MathUtils.degToRad(180)).toNonIndexed(),
+            new THREE.MeshStandardMaterial({ side: THREE.DoubleSide }),
+        );
+        scene.add(globe);
+        Objects.push(globe);
 
         var light = new THREE.AmbientLight(0xffffff);
         scene.add(light);
@@ -62,6 +73,7 @@
             .then((response) => response.json())
             .then((data) => {
                 data.forEach(element => {
+                    totalLines++;
                     if (element.geometry.type === "Polygon") {
                         let coordinates = element.geometry.coordinates;
                         // console.log(coordinates[0]);
@@ -76,10 +88,10 @@
                     }
                 });
             })
+            console.log("TOTAL LINES = " + totalLines);
 
         // function createLine(coordinates) {
         //     // console.log(coordinates);
-        //     totalLines++;
         //     const vertex = [];
         //     let lines = [];
         //     let value = [];
@@ -112,15 +124,54 @@
             }
             lines.push(new THREE.Vector2(coordinates[0][0], coordinates[0][1]));
             // console.log(lines);
+            scene.remove(globe);
 
             const geometry = new THREE.BufferGeometry().setFromPoints(lines);
             const line = new THREE.Line(geometry, material);
             scene.add(line);
+            console.log("TOTAL LINES = " + totalLines);
         }
 
 
 
         window.addEventListener('resize', onWindowResize);
+        window.addEventListener('dblclick', onPointerClick);
+
+        function onPointerClick(event) {
+            pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+            pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(pointer, camera);
+            let intersects = raycaster.intersectObjects(Objects, false);
+
+            const intersectionPoint = intersects[0].point;
+            // console.log('Sphere Position:', intersectionPoint);
+
+            // console.log( intersectionPoint.y + " z:" + intersectionPoint.z);
+            let latlong = [];
+            let lati = 90 - (57.2957795 * (Math.acos(-intersectionPoint.y / 5)));
+            if (Math.abs(lati) < 80.01) {
+                if (intersectionPoint.y >= 0) {
+                    latlong.x = (-Number(lati));
+                }
+                if (intersectionPoint.y < 0) {
+                    latlong.x = (Number(-(lati)));
+                }
+                if (intersectionPoint.z >= 0) {
+                    latlong.y = (Number(90 + (57.2957795 * Math.atan(intersectionPoint.z / intersectionPoint.z))));
+                }
+                if (intersectionPoint.z < 0) {
+                    let longi = (180 + (57.2957795 * Math.atan(intersectionPoint.x / intersectionPoint.z)));
+                    if (longi <= 180) {
+                        latlong.y = (Number(longi));
+                    } else {
+                        latlong.y = (Number(-90 - (180 - longi)));
+                    }
+                }
+                console.log(latlong);
+            }
+        }
+
         function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
@@ -133,7 +184,6 @@
             renderer.render(scene, camera)
         }
         render()
-        console.log(camera);
 
     </script>
 </body>

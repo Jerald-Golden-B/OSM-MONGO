@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>quadified_Vi_Ev.html</title>
+    <meta charset="utf-8">
+    <link rel="shortcut icon" href="ok.ico">
+
+    <style>
+        body {
+            margin: 0px;
+            background-color: #035;
+            font-family: Monospace;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        td {
+            text-align: center;
+            padding: 2px;
+            border: 1px solid #333;
+            color: #fff;
+            font-size: 12pt;
+        }
+
+        span {
+            position: absolute;
+            font-size: 12pt;
+            text-align: center;
+            z-index: 1;
+        }
+
+        .dir {
+            text-align: right;
+        }
+
+        .esq {
+            text-align: left;
+    </style>
+
+    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+
+    <script type="importmap">
+	{
+		"imports":{
+			"three":"https://unpkg.com/three@0.156.0/build/three.module.js",
+			"three/addons/":"https://unpkg.com/three@0.156.0/examples/jsm/"
+		}
+	}
+</script>
+
+</head>
+
+<body>
+
+    <img src="" img/Equirectangular_projection_SW_2.jpg" style="display:none;"></img>
+
+    <div id="dedo"
+        style="position:absolute;left:-50px;top:10px;padding:4px;color:#fc0;background-color:#000;border:2px outset #cc6;display:;opacity:0;">
+    </div>
+
+    <span id="aaa" style="position:absolute;left:8%;top:10px;color:#0cf;font-size:20.5px;">... loading ...</span>
+
+    <button style="position:absolute;left:84%;top:84%;background-color:transparent;text-align:center;"><a id="code"
+            href="quadified.txt" target="_blank" style="color:#fc0;text-decoration:none;font-size:16pt;">The
+            Code</a></button>
+
+    <script type="module">
+
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        console.clear();
+
+        //function calcAngle(adjacent,hypotenuse){return Math.acos(adjacent/hypotenuse);}
+        //alert(calcAngle(8,10)); ... Expected output:0.6435011087932843
+        //alert(calcAngle(5,3)); ... Expected output:NaN
+        // x ... A number between -1 and 1, inclusive, representing the angle's cosine value.
+
+        var renderer, scene, camera, controls, grid, amb, textureLoader, textu;
+
+        var geo = []; var mat = [];
+        var w = 0;
+        var Earth;
+
+        var quad, qIdx;
+        var intersects = [];
+        var raycaster = new THREE.Raycaster();
+        var pointer = new THREE.Vector2();
+        var v3 = new THREE.Vector3();
+        var str = "";
+
+        var bId = function (id) { return document.getElementById(id); }
+        var daaa = bId("aaa");
+        var dspanid = bId("spanid");
+        var ddedo = bId("dedo");
+
+        function init() {
+
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 1, 1000);
+            camera.position.set(0, 0, 10);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(innerWidth, innerHeight);
+            renderer.setClearColor('#079', 1);
+            renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+            document.body.appendChild(renderer.domElement);
+
+            window.addEventListener("resize", event => {
+                camera.aspect = innerWidth / innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(innerWidth, innerHeight)
+            })
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enablePan = false;
+            controls.maxDistance = 14.02;
+            controls.minDistance = 7.01;
+
+            scene.add(new THREE.AmbientLight(0xffffff, 4));
+
+            grid = new THREE.GridHelper(15, 30, '#cc0', '#999');
+            grid.rotation.set(0, -Math.PI, 0);
+            scene.add(grid);
+
+            textureLoader = new THREE.TextureLoader();
+            textu = new THREE.TextureLoader().load("img/Equirectangular_projection_SW_3.jpg");
+            textu.colorSpace = THREE.SRGBColorSpace;
+            mat[1] = new THREE.MeshStandardMaterial({ color: "#fff", map: textu, transparent: true, opacity: 0.9 });
+
+            geo[2] = new THREE.SphereGeometry(0.02, 16, 16);
+            mat[2] = new THREE.MeshStandardMaterial({ color: '#fff' });
+            quad = new THREE.Mesh(geo[2], mat[2]);
+
+            Earth = new THREE.Mesh(
+                new THREE.SphereGeometry(5, 64, 64, 0, Math.PI * 2, THREE.MathUtils.degToRad(0), THREE.MathUtils.degToRad(180)).toNonIndexed(),
+                new THREE.MeshStandardMaterial({ map: textu, side: THREE.DoubleSide }));
+
+            quadify(Earth.geometry, 0.0001);
+            Earth.geometry.computeVertexNormals();
+            Earth.rotation.set(-0.015, -Math.PI / 2, 0);
+            scene.add(Earth);
+
+            window.addEventListener("pointerdown", event => {
+                pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+                pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+                ddedo.style.top = -20 + event.clientY + "px";
+                ddedo.style.left = 40 + event.clientX + "px";
+                raycaster.setFromCamera(pointer, camera);
+                intersects = raycaster.intersectObject(Earth, false);
+                if (intersects.length > 0) {
+                    let qIdx = Math.floor(intersects[0].faceIndex / 2);
+                    quad.position.copy(intersects[0].point);
+                    scene.add(quad);
+                    console.log(" x:" + quad.position.y + " x:" + quad.position.y + " z:" + quad.position.z);
+                    let lati = 90 - (57.2957795 * (Math.acos(-quad.position.y / 5)));
+                    str = "";
+                    ddedo.style.opacity = 0;
+                    if (Math.abs(lati) < 80.01) {
+                        //str="<table><tr><td colspan='2'>Area: " + qIdx + "</td></tr>";
+                        str = "<table style='padding:0px;'>";
+                        if (quad.position.y >= 0) {
+                            str = str + "<tr><td class='esq'>Latitude</td><td class='dir'>" + (-Number(lati).toFixed(2));
+                            str = str + "</td></tr>";
+                        }
+                        if (quad.position.y < 0) {
+                            str = str + "<tr><td class='esq'>Latitude</td><td class='dir'>" + Number(-(lati)).toFixed(2);
+                            str = str + "</td></tr>";
+                        }
+                        if (quad.position.z >= 0) {
+                            str = str + "<tr><td class='esq'>Longitude</td><td class='dir'>" + Number(0 + (57.2957795 * Math.atan(quad.position.x / quad.position.z))).toFixed(2);
+                        }
+                        if (quad.position.z < 0) {
+                            let longi = (180 + (57.2957795 * Math.atan(quad.position.x / quad.position.z)));
+                            if (longi <= 180) {
+                                str = str + "<tr><td class='esq'>Longitude</td><td class='dir'>" + Number(longi).toFixed(2);
+                            } else {
+                                str = str + "<tr><td class='esq'>Longitude</td><td class='dir'>" + Number(-90 - (270 - longi)).toFixed(2);
+                            }
+                        }
+                        str = str + "</td></tr></table>";
+                        ddedo.innerHTML = str;
+                        ddedo.style.opacity = 1;
+                    } else {
+                        ddedo.style.opacity = 0;
+                    }
+                } else {
+                    ddedo.innerHTML = "";
+                    ddedo.style.opacity = 0;
+                }
+            })
+            daaa.innerHTML = "Click and find<br>Latitudes & Longitudes<br><i style='font-size:12pt;color:#fc0;'>(-80\xB0&lt;Lat's&lt;80\xB0)</i>";
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function quadify(Earth, distance) {
+            let pos = Earth.attributes.position;
+            let quadAmount = pos.count / 6;
+            let a1 = new THREE.Vector3(), b1 = new THREE.Vector3(), c1 = new THREE.Vector3(),
+                a2 = new THREE.Vector3(), b2 = new THREE.Vector3(), c2 = new THREE.Vector3();
+            let hSide = new THREE.Vector3(), vSide = new THREE.Vector3();
+            for (let i = 0; i < quadAmount; i++) {
+                a1.fromBufferAttribute(pos, i * 6 + 0);
+                b1.fromBufferAttribute(pos, i * 6 + 1);
+                c1.fromBufferAttribute(pos, i * 6 + 2);
+                a2.fromBufferAttribute(pos, i * 6 + 3);
+                b2.fromBufferAttribute(pos, i * 6 + 4);
+                c2.fromBufferAttribute(pos, i * 6 + 5);
+
+                vSide.subVectors(c1, a1).normalize();
+                a1.addScaledVector(vSide, distance);
+                c1.addScaledVector(vSide, -distance);
+                c2.addScaledVector(vSide, -distance);
+
+                vSide.subVectors(b2, a2).normalize();
+                b1.addScaledVector(vSide, distance);
+                a2.addScaledVector(vSide, distance);
+                b2.addScaledVector(vSide, -distance);
+
+                hSide.subVectors(b1, a1).normalize();
+                a1.addScaledVector(hSide, distance);
+                b1.addScaledVector(hSide, -distance);
+                a2.addScaledVector(hSide, -distance);
+
+                vSide.subVectors(c2, b2).normalize();
+                b2.addScaledVector(vSide, distance);
+                c2.addScaledVector(vSide, -distance);
+                c1.addScaledVector(vSide, -distance);
+
+                pos.setXYZ(i * 6 + 0, a1.x, a1.y, a1.z);
+                pos.setXYZ(i * 6 + 1, b1.x, b1.y, b1.z);
+                pos.setXYZ(i * 6 + 2, c1.x, c1.y, c1.z);
+                pos.setXYZ(i * 6 + 3, a2.x, a2.y, a2.z);
+                pos.setXYZ(i * 6 + 4, b2.x, b2.y, b2.z);
+                pos.setXYZ(i * 6 + 5, c2.x, c2.y, c2.z);
+            }
+        }
+
+        init();
+
+        animate();
+
+        /*
+        Click and find Latitudes & Longitudes
+        
+        the link:
+        
+        http://jrlazz.eu5.org/anim/quadified.html
+        
+        This code was inspired by and heavily based on @prisoner849's special work "Sphere of separate quads" (https://discourse.threejs.org/t/sphere-of-separate-quads/38609).
+        
+        There I found a way to click on a point on the Earth, get the coordinates of the points, and transform them into latitude and longitude.
+        
+        In the code You will find some interesting URL´s to find references.
+        
+        //https://stackoverflow.com/questions/5674149/3d-coordinates-on-a-sphere-to-latitude-and-longitude
+        //https://en.wikipedia.org/wiki/Spherical_coordinate_system
+        //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/acos
+        
+        */
+
+    </script>
+
+</body>
+
+</html>
