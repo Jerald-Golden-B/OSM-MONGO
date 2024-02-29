@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>three</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <script type="importmap">
+            {
+                "imports": {
+                    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+                }
+            }
+        </script>
+    <style>
+        #my_canvas {
+            /* position: absolute; */
+            width: 100%;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="my_canvas"></canvas>
+    <script type="module">
+        import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.161.0/three.module.js'
+        import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+
+
+
+        var scene = new THREE.Scene();
+        var camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 10000);
+        camera.position.set(0, 0, 300);
+        scene.add(camera);
+
+        var renderer = new THREE.WebGLRenderer({ canvas: my_canvas });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        var controls = new OrbitControls(camera, renderer.domElement);
+        controls.minDistance = 10;
+        controls.update();
+
+        var light = new THREE.AmbientLight(0xffffff);
+        scene.add(light);
+
+
+
+        const material = new THREE.LineBasicMaterial({ color: 0xffffff });
+
+        fetch('/get')
+            .then((response) => response.json())
+            .then((data) => {
+                data.forEach(element => {
+                    if (element.geometry.type === "Polygon") {
+                        let coordinates = element.geometry.coordinates;
+                        // console.log(coordinates[0]);
+                        createLine(coordinates[0]);
+                    }
+                    else if (element.geometry.type === "MultiPolygon") {
+                        let coordinates = element.geometry.coordinates;
+                        coordinates.forEach(element => {
+                            // console.log(element[0]);
+                            createLine(element[0]);
+                        })
+                    }
+                });
+            })
+
+        // function createLine(coordinates) {
+        //     // console.log(coordinates);
+        //     totalLines++;
+        //     const vertex = [];
+        //     let lines = [];
+        //     let value = [];
+        //     for (let i = 0; i < coordinates.length; i++) {
+        //         value = [];
+        //         const coordinate = coordinates[i];
+        //         vertex.push(coordinate[0], coordinate[1]);
+        //         var lon = coordinate[0];
+        //         var lat = coordinate[1];
+
+        //         value.push(Math.cos(lat * Math.PI / 180) * Math.cos(lon * Math.PI / 180) * 100);
+        //         value.push(Math.cos(lat * Math.PI / 180) * Math.sin(lon * Math.PI / 180) * 100);
+        //         value.push(Math.sin(lat * Math.PI / 180) * 100);
+        //         lines.push(new THREE.Vector3(value[0], value[1], value[2]));
+        //     }
+        //     lines.push(lines[0]);
+        //     const geometry = new THREE.BufferGeometry().setFromPoints(lines);
+        //     const line = new THREE.Line(geometry, material);
+        //     line.rotation.setFromVector3(new THREE.Vector3(-Math.PI / 2, 0, -Math.PI));
+        //     scene.add(line);
+        // }
+
+        function createLine(coordinates) {
+            // totalLines++;
+            let lines = [];
+            for (let i = 0; i < coordinates.length; i++) {
+                const coordinate = coordinates[i];
+                const vertex = new THREE.Vector2(coordinate[0], coordinate[1]);
+                lines.push(vertex);
+            }
+            lines.push(new THREE.Vector2(coordinates[0][0], coordinates[0][1]));
+            // console.log(lines);
+
+            const geometry = new THREE.BufferGeometry().setFromPoints(lines);
+            const line = new THREE.Line(geometry, material);
+            scene.add(line);
+        }
+
+
+
+        window.addEventListener('resize', onWindowResize);
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function render() {
+            requestAnimationFrame(render);
+            controls.update();
+            renderer.render(scene, camera)
+        }
+        render()
+        console.log(camera);
+
+    </script>
+</body>
+
+</html>
