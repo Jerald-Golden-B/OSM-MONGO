@@ -38,28 +38,55 @@ app.get("/get", (req, res) => {
         // console.log(coordinates);
 
         const coordinates = await collection.find({
-            geometry: {
-                $geoWithin: {
-                    $geometry: {
-                        type: 'Polygon',
-                        coordinates: [
-                            [
-                                [-180, 90],
-                                [-180, -90],
-                                [180, -90],
-                                [180, 90],
-                                [-180, 90]
-                            ]
-                        ],
-                        crs: {
-                            type: "name",
-                            properties: { name: "urn:x-mongodb:crs:strictwinding:EPSG:4326" }
+            $or: [
+                {
+                    geometry: {
+                        $geoWithin: {
+                            $geometry: {
+                                type: 'Polygon',
+                                coordinates: [
+                                    [
+                                        [-180, 90],
+                                        [-180, -90],
+                                        [180, -90],
+                                        [180, 90],
+                                        [-180, 90]
+                                    ]
+                                ],
+                                crs: {
+                                    type: "name",
+                                    properties: { name: "urn:x-mongodb:crs:strictwinding:EPSG:4326" }
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    geometry: {
+                        $geoIntersects: {
+                            $geometry: {
+                                type: 'Polygon',
+                                coordinates: [
+                                    [
+                                        [-180, 90],
+                                        [-180, -90],
+                                        [180, -90],
+                                        [180, 90],
+                                        [-180, 90]
+                                    ]
+                                ],
+                                crs: {
+                                    type: "name",
+                                    properties: { name: "urn:x-mongodb:crs:strictwinding:EPSG:4326" }
+                                }
+                            }
                         }
                     }
                 }
-            }
+            ]
         }).toArray();
-        // console.log(coordinates);
+
+        console.log(coordinates);
         res.json(coordinates);
     }
     run();
