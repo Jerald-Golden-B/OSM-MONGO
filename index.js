@@ -86,7 +86,7 @@ app.get("/get", (req, res) => {
             ]
         }).toArray();
 
-        console.log(coordinates);
+        // console.log(coordinates);
         res.json(coordinates);
     }
     run();
