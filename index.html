@@ -59,43 +59,43 @@
             new THREE.SphereGeometry(100, 64, 64, 0, Math.PI * 2, THREE.MathUtils.degToRad(0), THREE.MathUtils.degToRad(180)).toNonIndexed(),
             new THREE.MeshStandardMaterial({ side: THREE.DoubleSide }),
         );
-        scene.add(globe);
         Objects.push(globe);
-
+        
         var light = new THREE.AmbientLight(0xffffff);
         scene.add(light);
-
-
-
+        
+        
+        
         const material = new THREE.LineBasicMaterial({ color: 0xffffff });
-
+        
         fetch('/get')
-            .then((response) => response.json())
-            .then((data) => {
-                data.forEach(element => {
-                    totalLines++;
-                    if (element.geometry.type === "Polygon") {
-                        let coordinates = element.geometry.coordinates;
-                        // console.log(coordinates[0]);
-                        createLine(coordinates[0]);
-                    }
-                    else if (element.geometry.type === "MultiPolygon") {
-                        let coordinates = element.geometry.coordinates;
-                        coordinates.forEach(element => {
-                            // console.log(element[0]);
-                            createLine(element[0]);
-                        })
-                    }
-                });
-            })
+        .then((response) => response.json())
+        .then((data) => {
+            data.forEach(element => {
+                totalLines++;
+                if (element.geometry.type === "Polygon") {
+                    let coordinates = element.geometry.coordinates;
+                    // console.log(coordinates[0]);
+                    createLine(coordinates[0]);
+                }
+                else if (element.geometry.type === "MultiPolygon") {
+                    let coordinates = element.geometry.coordinates;
+                    coordinates.forEach(element => {
+                        // console.log(element[0]);
+                        createLine(element[0]);
+                    })
+                }
+            });
             console.log("TOTAL LINES = " + totalLines);
-
+        })
+        
         // function createLine(coordinates) {
-        //     // console.log(coordinates);
-        //     const vertex = [];
-        //     let lines = [];
-        //     let value = [];
-        //     for (let i = 0; i < coordinates.length; i++) {
+            // scene.add(globe);
+            //     // console.log(coordinates);
+            //     const vertex = [];
+            //     let lines = [];
+            //     let value = [];
+            //     for (let i = 0; i < coordinates.length; i++) {
         //         value = [];
         //         const coordinate = coordinates[i];
         //         vertex.push(coordinate[0], coordinate[1]);
@@ -115,6 +115,7 @@
         // }
 
         function createLine(coordinates) {
+            scene.remove(globe);
             // totalLines++;
             let lines = [];
             for (let i = 0; i < coordinates.length; i++) {
@@ -124,7 +125,6 @@
             }
             lines.push(new THREE.Vector2(coordinates[0][0], coordinates[0][1]));
             // console.log(lines);
-            scene.remove(globe);
 
             const geometry = new THREE.BufferGeometry().setFromPoints(lines);
             const line = new THREE.Line(geometry, material);
@@ -138,39 +138,44 @@
         window.addEventListener('dblclick', onPointerClick);
 
         function onPointerClick(event) {
-            pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-            pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+                pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+                pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-            raycaster.setFromCamera(pointer, camera);
-            let intersects = raycaster.intersectObjects(Objects, false);
+                raycaster.setFromCamera(pointer, camera);
+                let intersects = raycaster.intersectObjects(Objects, false);
 
-            const intersectionPoint = intersects[0].point;
-            // console.log('Sphere Position:', intersectionPoint);
+                if (intersects.length > 0) {
+                    const intersectionPoint = intersects[0].point;
+                    let latlong = [];
 
-            // console.log( intersectionPoint.y + " z:" + intersectionPoint.z);
-            let latlong = [];
-            let lati = 90 - (57.2957795 * (Math.acos(-intersectionPoint.y / 5)));
-            if (Math.abs(lati) < 80.01) {
-                if (intersectionPoint.y >= 0) {
-                    latlong.x = (-Number(lati));
-                }
-                if (intersectionPoint.y < 0) {
-                    latlong.x = (Number(-(lati)));
-                }
-                if (intersectionPoint.z >= 0) {
-                    latlong.y = (Number(90 + (57.2957795 * Math.atan(intersectionPoint.z / intersectionPoint.z))));
-                }
-                if (intersectionPoint.z < 0) {
-                    let longi = (180 + (57.2957795 * Math.atan(intersectionPoint.x / intersectionPoint.z)));
-                    if (longi <= 180) {
-                        latlong.y = (Number(longi));
-                    } else {
-                        latlong.y = (Number(-90 - (180 - longi)));
+                    let lati = 90 - (57.2957795 * Math.acos(-intersectionPoint.y / 100));
+                    let longi = 0;
+
+                    if (Math.abs(lati) < 80.01) {
+                        if (intersectionPoint.y >= 0) {
+                            latlong.x = -Number(lati);
+                        } else {
+                            latlong.x = Number(-lati);
+                        }
+                        if (intersectionPoint.z >= 0) {
+                            console.log("1");
+                            latlong.y = 90 + (57.2957795 * Math.atan(intersectionPoint.x / intersectionPoint.z));
+                        } else {
+                            longi = 180 + (57.2957795 * Math.atan(intersectionPoint.x / intersectionPoint.z));
+                            if (longi <= 180) {
+                                console.log("3");
+                                latlong.y = longi;
+                            } else {
+                                longi = 180 + (57.2957795 * Math.atan(intersectionPoint.z / intersectionPoint.x));
+                                console.log("4");
+                                latlong.y = -90 - (90 - longi);
+                            }
+                        }
+                        console.log(latlong);
                     }
                 }
-                console.log(latlong);
             }
-        }
+        
 
         function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;

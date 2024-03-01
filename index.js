@@ -15,12 +15,14 @@ const client = new MongoClient(uri);
 
 
 app.get("/get", (req, res) => {
-    
+
     async function run() {
         await client.connect();
         const db = client.db(dbName);
         const collection = db.collection(collectionName);
-        
+
+        // await collection.createIndex({"geometry.coordinates": "2dsphere"})
+
         // const coordinates = await collection.find({
         //     geometry: {
         //         $geoIntersects: {
@@ -34,25 +36,31 @@ app.get("/get", (req, res) => {
         //     }
         // }).toArray();
         // console.log(coordinates);
-    
-        const coordinates1 = await collection.find({
+
+        const coordinates = await collection.find({
             geometry: {
                 $geoWithin: {
                     $geometry: {
-                        type: "Polygon",
-                        coordinates: [[
-                            [-122.580407, 26.814717],
-                            [-16.546990, 27.806426],
-                            [-15.988919 ,-63.154007],
-                            [-139.880596 , -64.627223],
-                            [-122.580407, 26.814717]
-                        ]]
+                        type: 'Polygon',
+                        coordinates: [
+                            [
+                                [-180, 90],
+                                [-180, -90],
+                                [180, -90],
+                                [180, 90],
+                                [-180, 90]
+                            ]
+                        ],
+                        crs: {
+                            type: "name",
+                            properties: { name: "urn:x-mongodb:crs:strictwinding:EPSG:4326" }
+                        }
                     }
                 }
             }
         }).toArray();
-        console.log(coordinates1);
-        res.json(coordinates1);
+        // console.log(coordinates);
+        res.json(coordinates);
     }
     run();
 });
