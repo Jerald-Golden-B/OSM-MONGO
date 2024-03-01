@@ -136,6 +136,7 @@
 
         window.addEventListener('resize', onWindowResize);
         window.addEventListener('dblclick', onPointerClick);
+        window.addEventListener('wheel', updateCornerCoordinates);
 
         function onPointerClick(event) {
             pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -158,21 +159,88 @@
                         latlong.x = Number(-lati);
                     }
                     if (intersectionPoint.z >= 0) {
-                        console.log("1");
                         latlong.y = 90 + (57.2957795 * Math.atan(intersectionPoint.x / intersectionPoint.z));
                     } else {
                         longi = 180 + (57.2957795 * Math.atan(intersectionPoint.x / intersectionPoint.z));
                         if (longi <= 180) {
-                            console.log("3");
                             latlong.y = longi;
                         } else {
                             longi = 180 + (57.2957795 * Math.atan(intersectionPoint.z / intersectionPoint.x));
-                            console.log("4");
                             latlong.y = -90 - (90 - longi);
                         }
                     }
                     console.log(latlong);
                 }
+            }
+        }
+
+
+        let boxCoordinates = [];
+        function updateCornerCoordinates(event) {
+            let topLeftCorner, topRightCorner, bottomLeftCorner, bottomRightCorner;
+            const top = new THREE.Vector3(0, -1, 0.5).unproject(camera);
+            const bottom = new THREE.Vector3(0, 1, 0.5).unproject(camera);
+            const left = new THREE.Vector3(-1, 0, 0.5).unproject(camera);
+            const right = new THREE.Vector3(1, 0, 0.5).unproject(camera);
+
+            topLeftCorner = top.clone().add(left).multiplyScalar(0.5);
+            topRightCorner = top.clone().add(right).multiplyScalar(0.5);
+            bottomLeftCorner = bottom.clone().add(left).multiplyScalar(0.5);
+            bottomRightCorner = bottom.clone().add(right).multiplyScalar(0.5);
+
+            checkIntersection(topLeftCorner);
+            checkIntersection(topRightCorner);
+            checkIntersection(bottomLeftCorner);
+            checkIntersection(bottomRightCorner);
+
+            if (boxCoordinates.length >= 4) {
+                console.log(boxCoordinates);
+                boxCoordinates = [];
+            }
+        }
+
+        function checkIntersection(corner) {
+            const raycaster = new THREE.Raycaster(camera.position, corner.sub(camera.position).normalize());
+            const intersects = raycaster.intersectObjects(Objects, false);
+
+            if (intersects.length > 0) {
+                const intersectionPoint = intersects[0].point;
+                let latlong = [];
+
+                let lati = 90 - (57.2957795 * Math.acos(-intersectionPoint.y / 100));
+                let longi = 0;
+
+                if (Math.abs(lati) < 80.01) {
+                    if (intersectionPoint.y >= 0) {
+                        latlong.x = -Number(lati);
+                    } else {
+                        latlong.x = Number(-lati);
+                    }
+                    if (intersectionPoint.z >= 0) {
+                        latlong.y = 90 + (57.2957795 * Math.atan(intersectionPoint.x / intersectionPoint.z));
+                    } else {
+                        longi = 180 + (57.2957795 * Math.atan(intersectionPoint.x / intersectionPoint.z));
+                        if (longi <= 180) {
+                            latlong.y = longi;
+                        } else {
+                            longi = 180 + (57.2957795 * Math.atan(intersectionPoint.z / intersectionPoint.x));
+                            latlong.y = -90 - (90 - longi);
+                        }
+                    }
+                    // console.log(latlong);
+                }
+
+                // console.log("Intersection at Lat: " + lat + ", Lon: " + lon);
+                const outwardPoint = intersectionPoint.clone().normalize().multiplyScalar(150);
+
+                const lineGeometry = new THREE.BufferGeometry().setFromPoints([
+                    intersectionPoint,
+                    outwardPoint
+                ]);
+
+                const line = new THREE.Line(lineGeometry, new THREE.LineBasicMaterial({ color: 0xff0000 }));
+                scene.add(line);
+                boxCoordinates.push([latlong.x, latlong.y]);
             }
         }
 
