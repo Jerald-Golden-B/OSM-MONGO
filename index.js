@@ -46,22 +46,22 @@ app.post("/get", (req, res) => {
                         }
                     }
                 },
-                // {
-                //     geometry: {
-                //         $geoIntersects: {
-                //             $geometry: {
-                //                 type: 'Polygon',
-                //                 coordinates: [
-                //                     boxCoordinates
-                //                 ],
-                //                 crs: {
-                //                     type: "name",
-                //                     properties: { name: "urn:x-mongodb:crs:strictwinding:EPSG:4326" }
-                //                 }
-                //             }
-                //         }
-                //     }
-                // }
+                {
+                    geometry: {
+                        $geoIntersects: {
+                            $geometry: {
+                                type: 'Polygon',
+                                coordinates: [
+                                    boxCoordinates
+                                ],
+                                crs: {
+                                    type: "name",
+                                    properties: { name: "urn:x-mongodb:crs:strictwinding:EPSG:4326" }
+                                }
+                            }
+                        }
+                    }
+                }
             ]
         }).toArray();
 
