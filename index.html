@@ -37,7 +37,7 @@
         import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.161.0/three.module.js'
         import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
 
-        let lineObjects =[];
+        let lineObjects = [];
         let totalLines = 0;
 
         var scene = new THREE.Scene();
@@ -73,8 +73,9 @@
         const material = new THREE.LineBasicMaterial({ color: 0xffffff });
 
         function createBound(boxCoordinates) {
-            totalLines=0;
-            lineObjects.forEach(element=> {
+            // console.log(boxCoordinates);
+            totalLines = 0;
+            lineObjects.forEach(element => {
                 scene.remove(element);
             })
             fetch('/get', {
@@ -83,10 +84,11 @@
                     'Content-Type': 'application/json'
                 },
                 method: "POST",
-                body: JSON.stringify({ coordinates: boxCoordinates})
+                body: JSON.stringify({ coordinates: boxCoordinates })
             })
                 .then((response) => response.json())
                 .then((data) => {
+                    createLine(boxCoordinates);
                     data.forEach(element => {
                         totalLines++;
                         if (element.geometry.type === "Polygon") {
@@ -130,6 +132,7 @@
             line.rotation.setFromVector3(new THREE.Vector3(-Math.PI / 2, 0, -Math.PI));
             scene.add(line);
             lineObjects.push(line);
+            // console.log(line);
         }
 
         // function createLine(coordinates) {
@@ -226,14 +229,14 @@
                     }
                     console.log(latlong);
                 }
-                addLine(intersectionPoint);
+                addMarker(intersectionPoint);
                 calculateCoordinates(latlong.x, latlong.y, 1000000);
 
 
             }
         }
 
-        function addLine(intersection) {
+        function addMarker(intersection) {
             const outwardPoint = intersection.clone().normalize().multiplyScalar(150);
             const lineGeometry = new THREE.BufferGeometry().setFromPoints([
                 intersection,
@@ -283,7 +286,7 @@
             boxCoordinates.push([coordLong3 * (180 / Math.PI), coordLat3 * (180 / Math.PI)]);
             boxCoordinates.push([coordLong2 * (180 / Math.PI), coordLat2 * (180 / Math.PI)]);
             boxCoordinates.push([coordLong1 * (180 / Math.PI), coordLat1 * (180 / Math.PI)]);
-            
+
             // console.log(boxCoordinates);
 
             createBound(boxCoordinates);
