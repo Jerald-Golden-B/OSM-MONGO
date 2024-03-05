@@ -3,6 +3,11 @@ const app = express();
 const path = require('path');
 const { MongoClient } = require('mongodb');
 app.use(express.static(path.join(__dirname)));
+const bodyParser = require("body-parser");
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+
+
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -14,28 +19,14 @@ const client = new MongoClient(uri);
 
 
 
-app.get("/get", (req, res) => {
+app.post("/get", (req, res) => {
+    let boxCoordinates = req.body.coordinates;
+    console.log(boxCoordinates);
 
     async function run() {
         await client.connect();
         const db = client.db(dbName);
         const collection = db.collection(collectionName);
-
-        // await collection.createIndex({"geometry.coordinates": "2dsphere"})
-
-        // const coordinates = await collection.find({
-        //     geometry: {
-        //         $geoIntersects: {
-        //             $geometry: {
-        //                 type: "Point",
-        //                 coordinates: [
-        //                     -109.99966285694285, 53.46562803128239
-        //                 ]
-        //             }
-        //         }
-        //     }
-        // }).toArray();
-        // console.log(coordinates);
 
         const coordinates = await collection.find({
             $or: [
@@ -45,13 +36,7 @@ app.get("/get", (req, res) => {
                             $geometry: {
                                 type: 'Polygon',
                                 coordinates: [
-                                    [
-                                        [-180, 90],
-                                        [-180, -90],
-                                        [180, -90],
-                                        [180, 90],
-                                        [-180, 90]
-                                    ]
+                                    boxCoordinates
                                 ],
                                 crs: {
                                     type: "name",
@@ -61,28 +46,22 @@ app.get("/get", (req, res) => {
                         }
                     }
                 },
-                {
-                    geometry: {
-                        $geoIntersects: {
-                            $geometry: {
-                                type: 'Polygon',
-                                coordinates: [
-                                    [
-                                        [-180, 90],
-                                        [-180, -90],
-                                        [180, -90],
-                                        [180, 90],
-                                        [-180, 90]
-                                    ]
-                                ],
-                                crs: {
-                                    type: "name",
-                                    properties: { name: "urn:x-mongodb:crs:strictwinding:EPSG:4326" }
-                                }
-                            }
-                        }
-                    }
-                }
+                // {
+                //     geometry: {
+                //         $geoIntersects: {
+                //             $geometry: {
+                //                 type: 'Polygon',
+                //                 coordinates: [
+                //                     boxCoordinates
+                //                 ],
+                //                 crs: {
+                //                     type: "name",
+                //                     properties: { name: "urn:x-mongodb:crs:strictwinding:EPSG:4326" }
+                //                 }
+                //             }
+                //         }
+                //     }
+                // }
             ]
         }).toArray();
 
