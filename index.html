@@ -58,10 +58,21 @@
         controls.update();
         var Objects = [];
 
-        let globe = new THREE.Mesh(
+        const textureLoader = new THREE.TextureLoader();
+        const texture = textureLoader.load('image.png'); 
+        texture.colorSpace = THREE.SRGBColorSpace;
+
+        const globematerial = new THREE.MeshStandardMaterial({
+            map: texture, 
+            side: THREE.DoubleSide
+        });
+
+        var globe = new THREE.Mesh(
             new THREE.SphereGeometry(100, 64, 64, 0, Math.PI * 2, THREE.MathUtils.degToRad(0), THREE.MathUtils.degToRad(180)).toNonIndexed(),
-            new THREE.MeshStandardMaterial({ side: THREE.DoubleSide }),
+            globematerial
         );
+
+        globe.rotation.set(0, -Math.PI, 0);
         scene.add(globe);
         Objects.push(globe);
 
@@ -69,15 +80,10 @@
         scene.add(light);
 
 
-
         const material = new THREE.LineBasicMaterial({ color: 0xffffff });
 
         function createBound(boxCoordinates) {
             // console.log(boxCoordinates);
-            totalLines = 0;
-            lineObjects.forEach(element => {
-                scene.remove(element);
-            })
             fetch('/get', {
                 headers: {
                     'Accept': 'application/json',
@@ -88,7 +94,6 @@
             })
                 .then((response) => response.json())
                 .then((data) => {
-                    createLine(boxCoordinates);
                     data.forEach(element => {
                         totalLines++;
                         if (element.geometry.type === "Polygon") {
@@ -108,32 +113,6 @@
                 })
         }
 
-
-        function createLine(coordinates) {
-            // console.log(coordinates);
-            const vertex = [];
-            let lines = [];
-            let value = [];
-            for (let i = 0; i < coordinates.length; i++) {
-                value = [];
-                const coordinate = coordinates[i];
-                vertex.push(coordinate[0], coordinate[1]);
-                var lon = coordinate[0];
-                var lat = coordinate[1];
-
-                value.push(Math.cos(lat * Math.PI / 180) * Math.cos(lon * Math.PI / 180) * 100);
-                value.push(Math.cos(lat * Math.PI / 180) * Math.sin(lon * Math.PI / 180) * 100);
-                value.push(Math.sin(lat * Math.PI / 180) * 100);
-                lines.push(new THREE.Vector3(value[0], value[1], value[2]));
-            }
-            lines.push(lines[0]);
-            const geometry = new THREE.BufferGeometry().setFromPoints(lines);
-            const line = new THREE.Line(geometry, material);
-            line.rotation.setFromVector3(new THREE.Vector3(-Math.PI / 2, 0, -Math.PI));
-            scene.add(line);
-            lineObjects.push(line);
-            // console.log(line);
-        }
 
         // function createLine(coordinates) {
         //     scene.remove(globe);
@@ -155,6 +134,34 @@
 
 
 
+        function createLine(coordinates) {
+            // console.log(coordinates);
+            const vertex = [];
+            let lines = [];
+            let value = [];
+            for (let i = 0; i < coordinates.length; i++) {
+                value = [];
+                const coordinate = coordinates[i];
+                vertex.push(coordinate[0], coordinate[1]);
+                var lon = coordinate[0];
+                var lat = coordinate[1];
+
+                value.push(Math.cos(lat * Math.PI / 180) * Math.cos(lon * Math.PI / 180) * 100.1);
+                value.push(Math.cos(lat * Math.PI / 180) * Math.sin(lon * Math.PI / 180) * 100.1);
+                value.push(Math.sin(lat * Math.PI / 180) * 100.1);
+                lines.push(new THREE.Vector3(value[0], value[1], value[2]));
+            }
+            lines.push(lines[0]);
+            const geometry = new THREE.BufferGeometry().setFromPoints(lines);
+            const line = new THREE.Line(geometry, material);
+            line.rotation.setFromVector3(new THREE.Vector3(-Math.PI / 2, 0, -Math.PI));
+            scene.add(line);
+            lineObjects.push(line);
+            // console.log(line);
+        }
+
+
+
         window.addEventListener('resize', onWindowResize);
         window.addEventListener('dblclick', onPointerClick);
         window.addEventListener('wheel', updateCenterCoordinates);
@@ -171,7 +178,31 @@
                 let latlong = [];
 
                 let lati = 90 - (57.2957795 * Math.acos(-intersectionPoint.y / 100));
-                let longi = 0;
+
+
+                if (Math.abs(lati) < 80.01) {
+                    if (intersectionPoint.y >= 0) {
+                        latlong.x = (-Number(lati));
+                    }
+                    if (intersectionPoint.y < 0) {
+                        latlong.x = Number(-(lati));
+                    }
+                    if (intersectionPoint.z >= 0) {
+                        latlong.y = Number(90 + (57.2957795 * Math.atan(intersectionPoint.x / intersectionPoint.z)));
+                        console.log("2");
+                    }
+                    if (intersectionPoint.z < 0) {
+                        let longi = (180 + (57.2957795 * Math.atan(intersectionPoint.x / intersectionPoint.z)));
+                        if (longi <= 180) {
+                            latlong.y = Number(longi);
+                            console.log("3");
+                        } else {
+                            latlong.y = Number(-90 - (270 - longi));
+                            console.log("4");
+                        }
+                    }
+                    console.log([latlong.y, latlong.x]);
+                }
 
                 if (Math.abs(lati) < 80.01) {
                     if (intersectionPoint.y >= 0) {
@@ -182,7 +213,7 @@
                     if (intersectionPoint.z >= 0) {
                         latlong.y = 90 + (57.2957795 * Math.atan(intersectionPoint.x / intersectionPoint.z));
                     } else {
-                        longi = 180 + (57.2957795 * Math.atan(intersectionPoint.x / intersectionPoint.z));
+                        let longi = 180 + (57.2957795 * Math.atan(intersectionPoint.x / intersectionPoint.z));
                         if (longi <= 180) {
                             latlong.y = longi;
                         } else {
@@ -190,12 +221,43 @@
                             latlong.y = -90 - (90 - longi);
                         }
                     }
-                    console.log(latlong);
+                    console.log([latlong.y, latlong.x]);
                 }
             }
         }
 
+
+        function latLon(x, y, z) {
+            let latlong = [];
+            let lati = 90 - (57.2957795 * Math.acos(-y / 100));
+            let longi = 0;
+
+            if (Math.abs(lati) < 80.01) {
+                if (y >= 0) {
+                    latlong.x = -Number(lati);
+                } else {
+                    latlong.x = Number(-lati);
+                }
+                if (z >= 0) {
+                    latlong.y = 90 + (57.2957795 * Math.atan(x / z));
+                } else {
+                    longi = 180 + (57.2957795 * Math.atan(x / z));
+                    if (longi <= 180) {
+                        latlong.y = longi;
+                    } else {
+                        longi = 180 + (57.2957795 * Math.atan(z / x));
+                        latlong.y = -90 - (90 - longi);
+                    }
+                }
+            }
+            return [latlong.y, latlong.x];
+        }
+
         function updateCenterCoordinates() {
+            totalLines = 0;
+            lineObjects.forEach(element => {
+                scene.remove(element);
+            })
             camera.zoom++;
             // console.log(camera.zoom);
 
@@ -205,38 +267,52 @@
 
             if (intersects.length > 0) {
                 let intersectionPoint = intersects[0].point;
-                let latlong = [];
+                findCorner(intersectionPoint.x, intersectionPoint.y, intersectionPoint.z);
 
-                let lati = 90 - (57.2957795 * Math.acos(-intersectionPoint.y / 100));
-                let longi = 0;
+                function findCorner(x, y, z) {
+                    let cornerCoordinates = new THREE.Vector3(0, 0, 0);
+                    let intersection = new THREE.Vector3(x, y, z);
+                    // console.log(intersection);
+                    
+                    let box = [];
 
-                if (Math.abs(lati) < 80.01) {
-                    if (intersectionPoint.y >= 0) {
-                        latlong.x = -Number(lati);
-                    } else {
-                        latlong.x = Number(-lati);
-                    }
-                    if (intersectionPoint.z >= 0) {
-                        latlong.y = 90 + (57.2957795 * Math.atan(intersectionPoint.x / intersectionPoint.z));
-                    } else {
-                        longi = 180 + (57.2957795 * Math.atan(intersectionPoint.x / intersectionPoint.z));
-                        if (longi <= 180) {
-                            latlong.y = longi;
-                        } else {
-                            longi = 180 + (57.2957795 * Math.atan(intersectionPoint.z / intersectionPoint.x));
-                            latlong.y = -90 - (90 - longi);
-                        }
-                    }
-                    console.log(latlong);
+                    cornerCoordinates.x = intersection.x - 15;
+                    cornerCoordinates.y = intersection.y + 15;
+                    cornerCoordinates.z = intersection.z;
+
+                    box.push(latLon(cornerCoordinates.x, cornerCoordinates.y, cornerCoordinates.z))
+
+                    addMarker(cornerCoordinates);
+
+                    cornerCoordinates.x = intersection.x - 15;
+                    cornerCoordinates.y = intersection.y - 15;
+                    cornerCoordinates.z = intersection.z;
+                    box.push(latLon(cornerCoordinates.x, cornerCoordinates.y, cornerCoordinates.z))
+
+                    addMarker(cornerCoordinates);
+
+                    cornerCoordinates.x = intersection.x + 15;
+                    cornerCoordinates.y = intersection.y - 15;
+                    cornerCoordinates.z = intersection.z;
+                    box.push(latLon(cornerCoordinates.x, cornerCoordinates.y, cornerCoordinates.z))
+
+                    addMarker(cornerCoordinates);
+
+                    cornerCoordinates.x = intersection.x + 15;
+                    cornerCoordinates.y = intersection.y + 15;
+                    cornerCoordinates.z = intersection.z;
+                    box.push(latLon(cornerCoordinates.x, cornerCoordinates.y, cornerCoordinates.z))
+                    box.push(box[0])
+
+                    addMarker(cornerCoordinates);
+                    console.log(box);
+                    createBound(box);
                 }
-                addMarker(intersectionPoint);
-                calculateCoordinates(latlong.x, latlong.y, 1000000);
-
-
             }
         }
 
         function addMarker(intersection) {
+            console.log(intersection);
             const outwardPoint = intersection.clone().normalize().multiplyScalar(150);
             const lineGeometry = new THREE.BufferGeometry().setFromPoints([
                 intersection,
@@ -245,51 +321,7 @@
 
             const line = new THREE.Line(lineGeometry, new THREE.LineBasicMaterial({ color: 0xff0000 }));
             scene.add(line);
-        }
-
-
-        function calculateCoordinates(latitude, longitude, side) {
-            let latInDecimals = (Math.PI / 180) * latitude;
-            let longInDecimals = (Math.PI / 180) * longitude;
-
-            let lstStrCoords = [];
-
-            let changeInLat;
-            let changeInLong;
-            let lineOfLat;
-            let boxCoordinates = [];
-
-            changeInLong = (side / 1000) * (360.0 / 40075);
-            lineOfLat = Math.cos(longitude) * 40075;
-            changeInLat = (side / 1000) * (360.0 / lineOfLat);
-            changeInLat = changeInLat * (Math.PI / 180);
-            changeInLong = changeInLong * (Math.PI / 180);
-
-
-            let nLat = changeInLat * (Math.sqrt(2) / 2);
-            let nLong = changeInLong * (Math.sqrt(2) / 2);
-
-            let coordLat1 = latInDecimals + nLat;
-            let coordLong1 = longInDecimals + nLong;
-
-            let coordLat2 = latInDecimals + nLat;
-            let coordLong2 = longInDecimals - nLong;
-
-            let coordLat3 = latInDecimals - nLat;
-            let coordLong3 = longInDecimals - nLong;
-
-            let coordLat4 = latInDecimals - nLat;
-            let coordLong4 = longInDecimals + nLong;
-
-            boxCoordinates.push([coordLong1 * (180 / Math.PI), coordLat1 * (180 / Math.PI)]);
-            boxCoordinates.push([coordLong4 * (180 / Math.PI), coordLat4 * (180 / Math.PI)]);
-            boxCoordinates.push([coordLong3 * (180 / Math.PI), coordLat3 * (180 / Math.PI)]);
-            boxCoordinates.push([coordLong2 * (180 / Math.PI), coordLat2 * (180 / Math.PI)]);
-            boxCoordinates.push([coordLong1 * (180 / Math.PI), coordLat1 * (180 / Math.PI)]);
-
-            // console.log(boxCoordinates);
-
-            createBound(boxCoordinates);
+            lineObjects.push(line);
         }
 
         function onWindowResize() {
@@ -308,4 +340,16 @@
     </script>
 </body>
 
+
 </html>
+
+<!-- // function reverseFindCorner(latitude, longitude) {
+// let latRad = (90 - latitude) * Math.PI / 180;
+// let lonRad = longitude * Math.PI / 180;
+
+// let x = Math.sin(latRad) * Math.cos(lonRad);
+// let y = Math.cos(latRad);
+// let z = -Math.sin(latRad) * Math.sin(lonRad);
+
+// return { x, y, z };
+// } -->
