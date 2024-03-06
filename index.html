@@ -62,10 +62,7 @@
         const texture = textureLoader.load('image.png'); 
         texture.colorSpace = THREE.SRGBColorSpace;
 
-        const globematerial = new THREE.MeshStandardMaterial({
-            map: texture, 
-            side: THREE.DoubleSide
-        });
+        const globematerial = new THREE.MeshStandardMaterial({map: texture, side: THREE.DoubleSide});
 
         var globe = new THREE.Mesh(
             new THREE.SphereGeometry(100, 64, 64, 0, Math.PI * 2, THREE.MathUtils.degToRad(0), THREE.MathUtils.degToRad(180)).toNonIndexed(),
@@ -270,41 +267,44 @@
                 findCorner(intersectionPoint.x, intersectionPoint.y, intersectionPoint.z);
 
                 function findCorner(x, y, z) {
-                    let cornerCoordinates = new THREE.Vector3(0, 0, 0);
+                    let topleftCoordinates = new THREE.Vector3(0, 0, 0);
+                    let bottomleftCoordinates = new THREE.Vector3(0, 0, 0);
+                    let toprightCoordinates = new THREE.Vector3(0, 0, 0);
+                    let bottomrightCoordinates = new THREE.Vector3(0, 0, 0);
                     let intersection = new THREE.Vector3(x, y, z);
-                    // console.log(intersection);
+                    console.log(intersection.z);
                     
                     let box = [];
 
-                    cornerCoordinates.x = intersection.x - 15;
-                    cornerCoordinates.y = intersection.y + 15;
-                    cornerCoordinates.z = intersection.z;
+                    
+                    topleftCoordinates.x = intersection.x - 15;
+                    topleftCoordinates.y = intersection.y + 15;
+                    topleftCoordinates.z = 0;
+                    box.push(latLon(topleftCoordinates.x, topleftCoordinates.y, topleftCoordinates.z))
 
-                    box.push(latLon(cornerCoordinates.x, cornerCoordinates.y, cornerCoordinates.z))
+                    addMarker(topleftCoordinates);
 
-                    addMarker(cornerCoordinates);
+                    bottomleftCoordinates.x = intersection.x - 15;
+                    bottomleftCoordinates.y = intersection.y - 15;
+                    bottomleftCoordinates.z = intersection.z;
+                    box.push(latLon(bottomleftCoordinates.x, bottomleftCoordinates.y, bottomleftCoordinates.z))
 
-                    cornerCoordinates.x = intersection.x - 15;
-                    cornerCoordinates.y = intersection.y - 15;
-                    cornerCoordinates.z = intersection.z;
-                    box.push(latLon(cornerCoordinates.x, cornerCoordinates.y, cornerCoordinates.z))
+                    addMarker(bottomleftCoordinates);
 
-                    addMarker(cornerCoordinates);
+                    toprightCoordinates.x = intersection.x + 15;
+                    toprightCoordinates.y = intersection.y - 15;
+                    toprightCoordinates.z = intersection.z;
+                    box.push(latLon(toprightCoordinates.x, toprightCoordinates.y, toprightCoordinates.z))
 
-                    cornerCoordinates.x = intersection.x + 15;
-                    cornerCoordinates.y = intersection.y - 15;
-                    cornerCoordinates.z = intersection.z;
-                    box.push(latLon(cornerCoordinates.x, cornerCoordinates.y, cornerCoordinates.z))
+                    addMarker(toprightCoordinates);
 
-                    addMarker(cornerCoordinates);
-
-                    cornerCoordinates.x = intersection.x + 15;
-                    cornerCoordinates.y = intersection.y + 15;
-                    cornerCoordinates.z = intersection.z;
-                    box.push(latLon(cornerCoordinates.x, cornerCoordinates.y, cornerCoordinates.z))
+                    bottomrightCoordinates.x = intersection.x + 15;
+                    bottomrightCoordinates.y = intersection.y + 15;
+                    bottomrightCoordinates.z = intersection.z;
+                    box.push(latLon(bottomrightCoordinates.x, bottomrightCoordinates.y, bottomrightCoordinates.z))
                     box.push(box[0])
 
-                    addMarker(cornerCoordinates);
+                    addMarker(bottomrightCoordinates);
                     console.log(box);
                     createBound(box);
                 }
