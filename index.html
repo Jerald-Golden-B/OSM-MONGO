@@ -69,8 +69,6 @@
             Earthmaterial
         );
 
-        // quadify(Earth.geometry, 0.0001);
-        Earth.geometry.computeVertexNormals();
 
         Earth.rotation.set(0, -Math.PI, 0);
         scene.add(Earth);
@@ -153,6 +151,7 @@
             }
             lines.push(lines[0]);
             const geometry = new THREE.BufferGeometry().setFromPoints(lines);
+            // console.log(lines);
             const line = new THREE.Line(geometry, material);
             line.rotation.setFromVector3(new THREE.Vector3(-Math.PI / 2, 0, -Math.PI));
             scene.add(line);
@@ -281,92 +280,32 @@
                     topleftCoordinates.x = intersection.x - 15;
                     topleftCoordinates.y = intersection.y + 15;
                     topleftCoordinates.z = intersection.z;
-                    box.push(latLon(topleftCoordinates.x, topleftCoordinates.y, topleftCoordinates.z))
+                    box.push(latLon(topleftCoordinates.x, topleftCoordinates.y, topleftCoordinates.z));
 
-                    addMarker(topleftCoordinates);
-
+                    
                     bottomleftCoordinates.x = intersection.x - 15;
                     bottomleftCoordinates.y = intersection.y - 15;
                     bottomleftCoordinates.z = intersection.z;
-                    box.push(latLon(bottomleftCoordinates.x, bottomleftCoordinates.y, bottomleftCoordinates.z))
-
-                    addMarker(bottomleftCoordinates);
-
+                    box.push(latLon(bottomleftCoordinates.x, bottomleftCoordinates.y, bottomleftCoordinates.z));
+                    
+                    
                     toprightCoordinates.x = intersection.x + 15;
                     toprightCoordinates.y = intersection.y - 15;
                     toprightCoordinates.z = intersection.z;
-                    box.push(latLon(toprightCoordinates.x, toprightCoordinates.y, toprightCoordinates.z))
-
-                    addMarker(toprightCoordinates);
-
+                    box.push(latLon(toprightCoordinates.x, toprightCoordinates.y, toprightCoordinates.z));
+                    
+                    
                     bottomrightCoordinates.x = intersection.x + 15;
                     bottomrightCoordinates.y = intersection.y + 15;
                     bottomrightCoordinates.z = intersection.z;
                     box.push(latLon(bottomrightCoordinates.x, bottomrightCoordinates.y, bottomrightCoordinates.z))
-                    box.push(box[0])
-
-                    addMarker(bottomrightCoordinates);
-                    // console.log(box);
+                    
+                    createLine(box);
+                    box.push(box[0]);
                     createBound(box);
+
+                    console.log(box);
                 }
-            }
-        }
-
-        function addMarker(intersection) {
-            const outwardPoint = intersection.clone().normalize().multiplyScalar(150);
-            const lineGeometry = new THREE.BufferGeometry().setFromPoints([
-                intersection,
-                outwardPoint
-            ]);
-            console.log(intersection);
-            console.log(outwardPoint);
-
-            const line = new THREE.Line(lineGeometry, new THREE.LineBasicMaterial({ color: 0xff0000 }));
-            scene.add(line);
-            lineObjects.push(line);
-        }
-
-
-        function quadify(Earth, distance) {
-            let pos = Earth.attributes.position;
-            let quadAmount = pos.count / 6;
-            let a1 = new THREE.Vector3(), b1 = new THREE.Vector3(), c1 = new THREE.Vector3(),
-                a2 = new THREE.Vector3(), b2 = new THREE.Vector3(), c2 = new THREE.Vector3();
-            let hSide = new THREE.Vector3(), vSide = new THREE.Vector3();
-            for (let i = 0; i < quadAmount; i++) {
-                a1.fromBufferAttribute(pos, i * 6 + 0);
-                b1.fromBufferAttribute(pos, i * 6 + 1);
-                c1.fromBufferAttribute(pos, i * 6 + 2);
-                a2.fromBufferAttribute(pos, i * 6 + 3);
-                b2.fromBufferAttribute(pos, i * 6 + 4);
-                c2.fromBufferAttribute(pos, i * 6 + 5);
-
-                vSide.subVectors(c1, a1).normalize();
-                a1.addScaledVector(vSide, distance);
-                c1.addScaledVector(vSide, -distance);
-                c2.addScaledVector(vSide, -distance);
-
-                vSide.subVectors(b2, a2).normalize();
-                b1.addScaledVector(vSide, distance);
-                a2.addScaledVector(vSide, distance);
-                b2.addScaledVector(vSide, -distance);
-
-                hSide.subVectors(b1, a1).normalize();
-                a1.addScaledVector(hSide, distance);
-                b1.addScaledVector(hSide, -distance);
-                a2.addScaledVector(hSide, -distance);
-
-                vSide.subVectors(c2, b2).normalize();
-                b2.addScaledVector(vSide, distance);
-                c2.addScaledVector(vSide, -distance);
-                c1.addScaledVector(vSide, -distance);
-
-                pos.setXYZ(i * 6 + 0, a1.x, a1.y, a1.z);
-                pos.setXYZ(i * 6 + 1, b1.x, b1.y, b1.z);
-                pos.setXYZ(i * 6 + 2, c1.x, c1.y, c1.z);
-                pos.setXYZ(i * 6 + 3, a2.x, a2.y, a2.z);
-                pos.setXYZ(i * 6 + 4, b2.x, b2.y, b2.z);
-                pos.setXYZ(i * 6 + 5, c2.x, c2.y, c2.z);
             }
         }
 
