@@ -338,4 +338,37 @@
 // let z = -Math.sin(latRad) * Math.sin(lonRad);
 
 // return { x, y, z };
+function findCorner(x, y, z) {
+    let box = [];
+
+    // Define the size of the box
+    const boxSize = 15;
+
+    // Convert the center point to spherical coordinates
+    const centerLatLon = latLon(x, y, z);
+
+    // Calculate the corners of the box in spherical coordinates
+    const topLeft = [centerLatLon[0] + boxSize, centerLatLon[1] - boxSize];
+    const topRight = [centerLatLon[0] + boxSize, centerLatLon[1] + boxSize];
+    const bottomLeft = [centerLatLon[0] - boxSize, centerLatLon[1] - boxSize];
+    const bottomRight = [centerLatLon[0] - boxSize, centerLatLon[1] + boxSize];
+
+    // Convert the spherical coordinates of the corners to Cartesian coordinates
+    const vertices = [topLeft, topRight, bottomRight, bottomLeft, topLeft];
+    vertices.forEach(vertex => {
+        const lon = vertex[1];
+        const lat = vertex[0];
+        const x = Math.cos(lat * Math.PI / 180) * Math.cos(lon * Math.PI / 180) * 100.1;
+        const y = Math.cos(lat * Math.PI / 180) * Math.sin(lon * Math.PI / 180) * 100.1;
+        const z = Math.sin(lat * Math.PI / 180) * 100.1;
+        box.push(new THREE.Vector3(x, y, z));
+    });
+
+    // Create lines on the globe connecting the box corners
+    createLine(box.map(coord => [coord.x, coord.y, coord.z]));
+}
+
+
+
+
 // } -->
