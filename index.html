@@ -232,26 +232,6 @@
             let lati = 90 - (57.2957795 * Math.acos(-y / 100));
             let longi = 0;
 
-            // if (Math.abs(lati) < 80.01) {
-            //     if (y >= 0) {
-            //         latlong.x = -Number(lati);
-            //     } else {
-            //         latlong.x = Number(-lati);
-            //     }
-            //     if (z >= 0) {
-            //         latlong.y = 90 + (57.2957795 * Math.atan(x / z));
-            //     } else {
-            //         longi = 180 + (57.2957795 * Math.atan(x / z));
-            //         if (longi <= 180) {
-            //             latlong.y = longi;
-            //         } else {
-            //             longi = 180 + (57.2957795 * Math.atan(z / x));
-            //             latlong.y = -90 - (90 - longi);
-            //         }
-            //     }
-            // }
-            // return [latlong.y, latlong.x];
-
             if (Math.abs(lati) < 80.01) {
                 if (y >= 0) {
                     latlong.x = (-Number(lati));
@@ -281,54 +261,91 @@
             })
             camera.zoom++;
             // console.log(camera.zoom);
+            let box =[];
 
-            var vector = new THREE.Vector2(0, 0);
+            var vector = new THREE.Vector2(-0.2, 0.2);
             raycaster.setFromCamera(vector, camera);
             let intersects = raycaster.intersectObject(Earth);
+            box.push((latLon(intersects[0].point.x, intersects[0].point.y, intersects[0].point.z)));
 
-            if (intersects.length > 0) {
-                let intersectionPoint = intersects[0].point;
-                findCorner(intersectionPoint.x, intersectionPoint.y, intersectionPoint.z);
+            var vector = new THREE.Vector2(-0.2, -0.2);
+            raycaster.setFromCamera(vector, camera);
+            let intersects1 = raycaster.intersectObject(Earth);
+            box.push((latLon(intersects1[0].point.x, intersects1[0].point.y, intersects1[0].point.z)))
 
-                function findCorner(x, y, z) {
-                    let topleftCoordinates = new THREE.Vector3(0, 0, 0);
-                    let bottomleftCoordinates = new THREE.Vector3(0, 0, 0);
-                    let toprightCoordinates = new THREE.Vector3(0, 0, 0);
-                    let bottomrightCoordinates = new THREE.Vector3(0, 0, 0);
-                    let intersection = new THREE.Vector3(x, y, z);
+            var vector = new THREE.Vector2(0.2, -0.2);
+            raycaster.setFromCamera(vector, camera);
+            let intersects2 = raycaster.intersectObject(Earth);
+            box.push((latLon(intersects2[0].point.x, intersects2[0].point.y, intersects2[0].point.z)))
+            
+            var vector = new THREE.Vector2(0.2, 0.2);
+            raycaster.setFromCamera(vector, camera);
+            let intersects3 = raycaster.intersectObject(Earth);
+            box.push((latLon(intersects3[0].point.x, intersects3[0].point.y, intersects3[0].point.z)))
 
-                    let box = [];
+            console.log(box);
+            createLine(box);
+            box.push(box[0]);
+            createBound(box);
 
-                    topleftCoordinates.x = intersection.x - 15;
-                    topleftCoordinates.y = intersection.y + 15;
-                    topleftCoordinates.z = intersection.z;
-                    box.push(latLon(topleftCoordinates.x, topleftCoordinates.y, topleftCoordinates.z));
+            // if (intersects.length > 0) {
+            //     let intersectionPoint = intersects[0].point;
+            //     findCorner(intersectionPoint.x, intersectionPoint.y, intersectionPoint.z);
+
+            //     function findCorner(x, y, z) {
+            //         let topleftCoordinates = new THREE.Vector3(0, 0, 0);
+            //         let bottomleftCoordinates = new THREE.Vector3(0, 0, 0);
+            //         let toprightCoordinates = new THREE.Vector3(0, 0, 0);
+            //         let bottomrightCoordinates = new THREE.Vector3(0, 0, 0);
+            //         let intersection = new THREE.Vector3(x, y, z);
+
+            //         let box = [];
+            //         console.log((latLon(intersection.x, intersection.y, intersection.z)));
+
+            //         topleftCoordinates.x = intersection.x - 15;
+            //         topleftCoordinates.y = intersection.y + 15;
+            //         topleftCoordinates.z = intersection.z;
+            //         box.push(latLon(topleftCoordinates.x, topleftCoordinates.y, topleftCoordinates.z));
 
 
-                    bottomleftCoordinates.x = intersection.x - 15;
-                    bottomleftCoordinates.y = intersection.y - 15;
-                    bottomleftCoordinates.z = intersection.z;
-                    box.push(latLon(bottomleftCoordinates.x, bottomleftCoordinates.y, bottomleftCoordinates.z));
+            //         bottomleftCoordinates.x = intersection.x - 15;
+            //         bottomleftCoordinates.y = intersection.y - 15;
+            //         bottomleftCoordinates.z = intersection.z;
+            //         box.push(latLon(bottomleftCoordinates.x, bottomleftCoordinates.y, bottomleftCoordinates.z));
 
 
-                    toprightCoordinates.x = intersection.x + 15;
-                    toprightCoordinates.y = intersection.y - 15;
-                    toprightCoordinates.z = intersection.z;
-                    box.push(latLon(toprightCoordinates.x, toprightCoordinates.y, toprightCoordinates.z));
+            //         toprightCoordinates.x = intersection.x + 15;
+            //         toprightCoordinates.y = intersection.y - 15;
+            //         toprightCoordinates.z = intersection.z;
+            //         box.push(latLon(toprightCoordinates.x, toprightCoordinates.y, toprightCoordinates.z));
 
 
-                    bottomrightCoordinates.x = intersection.x + 15;
-                    bottomrightCoordinates.y = intersection.y + 15;
-                    bottomrightCoordinates.z = intersection.z;
-                    box.push(latLon(bottomrightCoordinates.x, bottomrightCoordinates.y, bottomrightCoordinates.z))
+            //         bottomrightCoordinates.x = intersection.x + 15;
+            //         bottomrightCoordinates.y = intersection.y + 15;
+            //         bottomrightCoordinates.z = intersection.z;
+            //         box.push(latLon(bottomrightCoordinates.x, bottomrightCoordinates.y, bottomrightCoordinates.z))
 
-                    createLine(box);
-                    box.push(box[0]);
-                    createBound(box);
+            //         let allValuesDefined = true;
 
-                    // console.log(box);
-                }
-            }
+            //         box.forEach((coordinates) => {
+            //             coordinates.forEach((value) => {
+            //                 if (value === undefined) {
+            //                     allValuesDefined = false;
+            //                     return;
+            //                 }
+            //             });
+            //         });
+
+            //         if (allValuesDefined) {
+            //             // console.log(box);
+            //             createLine(box);
+            //             box.push(box[0]);
+            //             createBound(box);
+            //             console.log(box);
+            //         }
+
+            //     }
+            // }
         }
 
 
