@@ -193,35 +193,36 @@
                     if (intersectionPoint.z < 0) {
                         let longi = (180 + (57.2957795 * Math.atan(intersectionPoint.x / intersectionPoint.z)));
                         if (longi <= 180) {
-                            latlong.y = Number(longi);
+                            latlong.y = Number(longi -270);
                             console.log("3");
                         } else {
-                            latlong.y = Number(-90 - (270 - longi));
+                            latlong.y = Number(-90 - (180 - longi));
                             console.log("4");
                         }
                     }
                     console.log([latlong.y, latlong.x]);
                 }
 
-                if (Math.abs(lati) < 80.01) {
-                    if (intersectionPoint.y >= 0) {
-                        latlong.x = -Number(lati);
-                    } else {
-                        latlong.x = Number(-lati);
-                    }
-                    if (intersectionPoint.z >= 0) {
-                        latlong.y = 90 + (57.2957795 * Math.atan(intersectionPoint.x / intersectionPoint.z));
-                    } else {
-                        let longi = 180 + (57.2957795 * Math.atan(intersectionPoint.x / intersectionPoint.z));
-                        if (longi <= 180) {
-                            latlong.y = longi;
-                        } else {
-                            longi = 180 + (57.2957795 * Math.atan(intersectionPoint.z / intersectionPoint.x));
-                            latlong.y = -90 - (90 - longi);
-                        }
-                    }
-                    console.log([latlong.y, latlong.x]);
-                }
+
+                // if (Math.abs(lati) < 80.01) {
+                //     if (intersectionPoint.y >= 0) {
+                //         latlong.x = -Number(lati);
+                //     } else {
+                //         latlong.x = Number(-lati);
+                //     }
+                //     if (intersectionPoint.z >= 0) {
+                //         latlong.y = 90 + (57.2957795 * Math.atan(intersectionPoint.x / intersectionPoint.z));
+                //     } else {
+                //         let longi = 180 + (57.2957795 * Math.atan(intersectionPoint.x / intersectionPoint.z));
+                //         if (longi <= 180) {
+                //             latlong.y = longi;
+                //         } else {
+                //             longi = 180 + (57.2957795 * Math.atan(intersectionPoint.z / intersectionPoint.x));
+                //             latlong.y = -90 - (90 - longi);
+                //         }
+                //     }
+                //     console.log([latlong.y, latlong.x]);
+                // }
             }
         }
 
@@ -231,21 +232,42 @@
             let lati = 90 - (57.2957795 * Math.acos(-y / 100));
             let longi = 0;
 
+            // if (Math.abs(lati) < 80.01) {
+            //     if (y >= 0) {
+            //         latlong.x = -Number(lati);
+            //     } else {
+            //         latlong.x = Number(-lati);
+            //     }
+            //     if (z >= 0) {
+            //         latlong.y = 90 + (57.2957795 * Math.atan(x / z));
+            //     } else {
+            //         longi = 180 + (57.2957795 * Math.atan(x / z));
+            //         if (longi <= 180) {
+            //             latlong.y = longi;
+            //         } else {
+            //             longi = 180 + (57.2957795 * Math.atan(z / x));
+            //             latlong.y = -90 - (90 - longi);
+            //         }
+            //     }
+            // }
+            // return [latlong.y, latlong.x];
+
             if (Math.abs(lati) < 80.01) {
                 if (y >= 0) {
-                    latlong.x = -Number(lati);
-                } else {
-                    latlong.x = Number(-lati);
+                    latlong.x = (-Number(lati));
+                }
+                if (y < 0) {
+                    latlong.x = Number(-(lati));
                 }
                 if (z >= 0) {
-                    latlong.y = 90 + (57.2957795 * Math.atan(x / z));
-                } else {
-                    longi = 180 + (57.2957795 * Math.atan(x / z));
+                    latlong.y = Number(90 + (57.2957795 * Math.atan(x / z)));
+                }
+                if (z < 0) {
+                    let longi = (180 + (57.2957795 * Math.atan(x / z)));
                     if (longi <= 180) {
-                        latlong.y = longi;
+                        latlong.y = Number(longi - 270);
                     } else {
-                        longi = 180 + (57.2957795 * Math.atan(z / x));
-                        latlong.y = -90 - (90 - longi);
+                        latlong.y = Number(-90 - (180 - longi));
                     }
                 }
             }
@@ -282,29 +304,29 @@
                     topleftCoordinates.z = intersection.z;
                     box.push(latLon(topleftCoordinates.x, topleftCoordinates.y, topleftCoordinates.z));
 
-                    
+
                     bottomleftCoordinates.x = intersection.x - 15;
                     bottomleftCoordinates.y = intersection.y - 15;
                     bottomleftCoordinates.z = intersection.z;
                     box.push(latLon(bottomleftCoordinates.x, bottomleftCoordinates.y, bottomleftCoordinates.z));
-                    
-                    
+
+
                     toprightCoordinates.x = intersection.x + 15;
                     toprightCoordinates.y = intersection.y - 15;
                     toprightCoordinates.z = intersection.z;
                     box.push(latLon(toprightCoordinates.x, toprightCoordinates.y, toprightCoordinates.z));
-                    
-                    
+
+
                     bottomrightCoordinates.x = intersection.x + 15;
                     bottomrightCoordinates.y = intersection.y + 15;
                     bottomrightCoordinates.z = intersection.z;
                     box.push(latLon(bottomrightCoordinates.x, bottomrightCoordinates.y, bottomrightCoordinates.z))
-                    
+
                     createLine(box);
                     box.push(box[0]);
                     createBound(box);
 
-                    console.log(box);
+                    // console.log(box);
                 }
             }
         }
